@@ -97,3 +97,26 @@ class Vaccine:
 
     def __str__(self):
         return f"(Vaccine Name: {self.vaccine_name}, Available Doses: {self.available_doses})"
+    
+    #return row[1], or return row['available_doses']???
+    
+    def get_all_vaccines():
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor()
+
+        get_all_vaccines_query= "Select * from Vaccines"
+        vaccines = []
+        try:
+            cursor.execute(get_all_vaccines_query)
+            for row in cursor:
+                vaccine_name = row[0]
+                available_doses = row[1]
+                vaccine = Vaccine(vaccine_name=vaccine_name, available_doses=available_doses)
+                vaccines.append(vaccine)
+        except pymssql.Error as e:
+            # print("Error occurred when updating caregiver availability")
+            raise e
+        finally:
+            cm.close_connection()
+        return vaccines

@@ -1,6 +1,7 @@
 from model.Vaccine import Vaccine
 from model.Caregiver import Caregiver
 from model.Patient import Patient
+from model.Appointment import Appointment
 from util.Util import Util
 from db.ConnectionManager import ConnectionManager
 import pymssql
@@ -18,11 +19,58 @@ current_caregiver = None
 
 
 def create_patient(tokens):
-    """
-    TODO: Part 1
-    """
-    pass
+    #create_patient <username> <password>
+    if len(tokens) != 3:
+        print("Failed to create user.")
+        return
 
+    username = tokens[1]
+    password = tokens[2]
+    # check 2: check if the username has been taken already
+    if username_exists_patient(username):
+        print("Username taken, try again!")
+        return
+
+    salt = Util.generate_salt()
+    hash = Util.generate_hash(password, salt)
+
+    # create the patient
+    patient = Patient(username, salt=salt, hash=hash)
+
+    # save to patient information to our database
+    try:
+        patient.save_to_db()
+    except pymssql.Error as e:
+        print("Failed to create user.")
+        print("Db-Error:", e)
+        quit()
+    except Exception as e:
+        print("Failed to create user.")
+        print(e)
+        return
+    print("Created user ", username)
+
+def username_exists_patient(username):
+    cm = ConnectionManager()
+    conn = cm.create_connection()
+
+    select_username = "SELECT * FROM Patients WHERE Username = %s"
+    try:
+        cursor = conn.cursor(as_dict=True)
+        cursor.execute(select_username, username)
+        #  returns false if the cursor is not before the first record or if there are no rows in the ResultSet.
+        for row in cursor:
+            return row['Username'] is not None
+    except pymssql.Error as e:
+        print("Error occurred when checking username")
+        print("Db-Error:", e)
+        quit()
+    except Exception as e:
+        print("Error occurred when checking username")
+        print("Error:", e)
+    finally:
+        cm.close_connection()
+    return False
 
 def create_caregiver(tokens):
     # create_caregiver <username> <password>
@@ -82,10 +130,39 @@ def username_exists_caregiver(username):
 
 
 def login_patient(tokens):
-    """
-    TODO: Part 1
-    """
-    pass
+    # login_patient <username> <password>
+    # check 1: if someone's already logged-in, they need to log out first
+    global current_patient
+    if current_patient is not None or current_patient is not None:
+        print("User already logged in.")
+        return
+
+    # check 2: the length for tokens need to be exactly 3 to include all information (with the operation name)
+    if len(tokens) != 3:
+        print("Login failed.")
+        return
+
+    username = tokens[1]
+    password = tokens[2]
+
+    patient = None
+    try:
+        patient = Patient(username, password=password).get()
+    except pymssql.Error as e:
+        print("Login failed.")
+        print("Db-Error:", e)
+        quit()
+    except Exception as e:
+        print("Login failed.")
+        print("Error:", e)
+        return
+
+    # check if the login was successful
+    if patient is None:
+        print("Login failed.")
+    else:
+        print("Logged in as: " + username)
+        current_patient = patient
 
 
 def login_caregiver(tokens):
@@ -125,17 +202,145 @@ def login_caregiver(tokens):
 
 
 def search_caregiver_schedule(tokens):
-    """
-    TODO: Part 2
-    """
-    pass
+    #input:  date, (table: Availability)
+    #output: caregiver: username, vaccine:name, doses. (table: caregiver; Vaccines)
+    # Separate each attribute with a space.
 
+    #check 1: If not logged in yet: 
+    global current_caregiver
+    global current_patient
+    if current_caregiver is None and current_patient is None:
+        print("Please login first!")
+        return
+    #check 2:
+    if len(tokens) != 2:
+        print("Please try again!")
+        return
+    
+    date = tokens[1]
+
+    caregiver = None
+    try:
+        # caregiver = Caregiver() #create an instance
+        caregivers = Caregiver.get_available_caregivers(date) # list: get the instance that match input date
+    except pymssql.Error as e:
+        print("Login failed.")
+        print("Db-Error:", e)
+        quit()
+    except Exception as e:
+        print("Login failed.")
+        print("Error:", e)
+        return
+    if caregivers is None:
+        print("There is no available caregiver for the date.")
+        return
+    
+    try:
+        vaccines = Vaccine.get_all_vaccines()
+    except pymssql.Error as e:
+        print("Login failed.")
+        print("Db-Error:", e)
+        quit()
+    except Exception as e:
+        print("Login failed.")
+        print("Error:", e)
+        return
+    if vaccines is None:
+        print("There is no available vaccines.")
+        return 
+   
+    for caregiver in caregivers:
+        for vaccine in vaccines:
+            print(f"Caregiver:{caregiver.get_username()} Date:{date} Vaccine name:{vaccine.get_vaccine_name()} doses:{vaccine.get_available_doses()}")
 
 def reserve(tokens):
+    #input: date vaccine
+    #output: caregiver_username, a_id
+
+    #check 1: if Patient not logged in:
+    global current_patient
+    global current_caregiver
+    if current_patient is None:
+        print("Please login first!")
+        return
+    #check 2: if Caregiver loggin in:
+    if current_caregiver is not None:
+        print("Please login as a patient!")
+        return
+    #check 3: arguments:
+    if len(tokens) != 3:
+        print("Please try again!")
+        return
     """
-    TODO: Part 2
+    TODO: check: no available Caregiver
+    TODO: no available vaccine
     """
-    pass
+    date = tokens[1]
+    vaccine_name = tokens[2]
+
+    caregivers = Caregiver.get_available_caregivers(date)
+    #check: available Caregiver
+    if caregivers is None:
+        print("No Caregiver is available!")
+        return 
+    #else???
+
+    #check: available vaccine:
+    vaccine = Vaccine(vaccine_name, None) #create an instance for vacccine.
+    #update the available_doses:
+    vaccine = vaccine.get() #updated instance, calling function on instance, not Class!
+
+    if vaccine.get_available_doses() <= 0:
+        print("Not enough available doses!")
+        return
+    
+    #output the available result:
+    caregiver = caregivers[0] #choose the first available in table. 
+    c_username = Caregiver.get_username(caregiver) #problem?
+    p_username = current_patient.get_username()
+    #generate ID:
+    appointment_id = Appointment.generate_id()
+    #create a row/instance for Appointment table:
+    appointment = Appointment(
+        a_id=appointment_id,
+        date = date,
+        c_username = c_username,
+        p_username = p_username,
+        vaccine_name=vaccine_name)
+    #save it to db:
+    try:
+        appointment.save_to_db()
+    except pymssql.Error as e:
+        print("Apponitment table update failed.")
+        print("Db-Error:", e)
+        return #why quit?
+    except Exception as e:
+        print("Apponitment table update failed.")
+        print("Error:", e)
+        return
+    # print("success!")
+    
+    #delete a row/instance for Availability table:
+    ##process the format of data:
+    date_whole= date.split("-")
+    month = int(date_whole[0])
+    day = int(date_whole[1])
+    year = int(date_whole[2])
+
+    try:
+        d = datetime.datetime(year, month, day)
+        caregiver.delete_availability(d)
+    except pymssql.Error as e:
+        print("Login failed.")
+        print("Db-Error:", e) #debug point 
+        return #why quit?
+    except Exception as e:
+        print("Login failed.")
+        print("Error:", e)
+        return
+    
+    print(f"Appointment ID:{appointment_id}, Caregiver username:{c_username}")
+
 
 
 def upload_availability(tokens):
@@ -245,11 +450,22 @@ def show_appointments(tokens):
 
 
 def logout(tokens):
-    """
-    TODO: Part 2
-    """
-    pass
-
+    #check if the argument is correct:
+    if len(tokens) > 1:
+        print("Logout command does not take any additional arguments. ")
+        return
+    
+    #check if patient/ cargiver is logged in already: 
+    global current_caregiver
+    global current_patient
+    if current_caregiver is None and current_patient is None:
+        print("Please login first!")
+        return
+    
+    #logout the current user:
+    current_caregiver = None 
+    current_patient = None
+    print("Successfully logged out!")
 
 def start():
     stop = False
@@ -326,3 +542,6 @@ if __name__ == "__main__":
     print("Welcome to the COVID-19 Vaccine Reservation Scheduling Application!")
 
     start()
+
+#what is the debug code?
+#edge case:if one does is already reserved by a patient, it shouldn't be reserved by another 

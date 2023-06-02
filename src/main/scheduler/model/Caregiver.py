@@ -72,8 +72,11 @@ class Caregiver:
         cursor = conn.cursor()
 
         add_availability = "INSERT INTO Availabilities VALUES (%s , %s)"
+        # delete_availability = "Delete From Availabilities Where date = %s AND username = %s"
         try:
             cursor.execute(add_availability, (d, self.username))
+            # conn.commit()
+            # cursor.execute(delete_availability, (d, self.username))
             # you must call commit() to persist your data if you don't set autocommit to True
             conn.commit()
         except pymssql.Error:
@@ -81,3 +84,47 @@ class Caregiver:
             raise
         finally:
             cm.close_connection()
+    
+    #delete:
+    def delete_availability(self, d):
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor()
+
+        # add_availability = "INSERT INTO Availabilities VALUES (%s , %s)"
+        delete_availability = "Delete From Availabilities Where Time = %s AND username = %s"
+        try:
+            # cursor.execute(add_availability, (d, self.username))
+            # conn.commit()
+            cursor.execute(delete_availability, (d, self.username))
+            # you must call commit() to persist your data if you don't set autocommit to True
+            conn.commit()
+        except pymssql.Error:
+            # print("Error occurred when updating caregiver availability")
+            raise
+        finally:
+            cm.close_connection()
+            
+    #I added: get availability Table:
+    def get_available_caregivers(date): #only needs date input to create instance
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor(as_dict=True)
+
+        #query Availabilities table:
+        get_cagivers_availability= "Select Username From Availabilities WHERE Time = %s Order by Username"
+        caregivers = [] #store a list itself
+        try:
+            cursor.execute(get_cagivers_availability, date)
+            for row in cursor:
+                username = row['Username']
+                caregiver = Caregiver(username)
+                caregivers.append(caregiver)
+        except pymssql.Error as e:
+            # print("Error occurred when updating caregiver availability")
+            raise e
+        finally:
+            cm.close_connection()
+        return caregivers
+
+
