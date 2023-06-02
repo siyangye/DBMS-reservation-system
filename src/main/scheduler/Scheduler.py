@@ -283,7 +283,6 @@ def reserve(tokens):
     if caregivers is None:
         print("No Caregiver is available!")
         return 
-    #else???
 
     #check: available vaccine:
     vaccine = Vaccine(vaccine_name, None) #create an instance for vacccine.
@@ -298,6 +297,8 @@ def reserve(tokens):
     caregiver = caregivers[0] #choose the first available in table. 
     c_username = Caregiver.get_username(caregiver) #problem?
     p_username = current_patient.get_username()
+    print(p_username)
+    print(c_username)
     #generate ID:
     appointment_id = Appointment.generate_id()
     #create a row/instance for Appointment table:
@@ -312,7 +313,7 @@ def reserve(tokens):
         appointment.save_to_db()
     except pymssql.Error as e:
         print("Apponitment table update failed.")
-        print("Db-Error:", e)
+        print("Db-Error:", e) #ok I failed here, but why 
         return #why quit?
     except Exception as e:
         print("Apponitment table update failed.")
@@ -326,6 +327,8 @@ def reserve(tokens):
     month = int(date_whole[0])
     day = int(date_whole[1])
     year = int(date_whole[2])
+
+    
 
     try:
         d = datetime.datetime(year, month, day)
@@ -444,9 +447,41 @@ def add_doses(tokens):
 
 def show_appointments(tokens):
     '''
-    TODO: Part 2
-    '''
-    pass
+    # TODO: Part 2
+    # '''
+    # pass
+    #input: (patient/caregiver username)
+    #For caregivers, you should print the appointment ID, vaccine name, date, and patient name. Order by the appointment ID. Separate each attribute with a space.
+    # For patients, you should print the appointment ID, vaccine name, date, and caregiver name. Order by the appointment ID. Separate each attribute with a space.
+    #check 1: user not log in:
+    global current_caregiver
+    global current_patient
+    if current_patient is None and current_caregiver is None:
+        print("Please login first!")
+        return
+    #check 2: wrong input:
+    if len(tokens) != 1:
+        print(" Wrong input usage!")
+        return 
+    #CASE 1: input- patient
+    if current_patient is not None: #patient is logged in!
+        #get the patient username:
+        p_username = Patient.get_username(current_patient)
+        #get appointment that match p_username:
+        appointment = Appointment.get_patient_appointment(p_username) #did I make sure I get all the instance?
+        # return appointment
+        #if no match, print message: 
+        # if len(appointment) == 0:
+            # print("No appointment made yet!")
+        
+        
+
+
+
+    #CASE 2: input- patient
+
+
+
 
 
 def logout(tokens):

@@ -119,7 +119,7 @@ class Caregiver:
             for row in cursor:
                 username = row['Username']
                 caregiver = Caregiver(username)
-                caregivers.append(caregiver)
+                caregivers.append(caregiver) #append each 'caregiver' instance to the list
         except pymssql.Error as e:
             # print("Error occurred when updating caregiver availability")
             raise e

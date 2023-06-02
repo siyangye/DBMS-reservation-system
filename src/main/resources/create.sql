@@ -28,8 +28,8 @@ CREATE TABLE Patients (
 CREATE TABLE Appointments(
     a_id varchar(255),
     date Date,
-    p_username varchar(255) REFERENCES Caregivers,
-    c_username varchar(255) REFERENCES Patients,
+    p_username varchar(255) REFERENCES Patients,
+    c_username varchar(255) REFERENCES Caregivers,
     Vaccine_name varchar(255) REFERENCES Vaccines,
     PRIMARY KEY (a_id)
 );

@@ -27,14 +27,14 @@ class Appointment:
         conn = cm.create_connection()
         cursor = conn.cursor(as_dict=True)
 
-        get_appointment_details = "SELECT a_id, date, c_username, p_username, vaccine_name FROM Appointments WHERE a_id = %s"
+        get_appointment_details = "SELECT a_id, date, c_username, p_username, Vaccine_name FROM Appointments WHERE a_id = %s"
         try:
             cursor.execute(get_appointment_details, self.a_id)
             for row in cursor:
                 self.date = row['date']
                 self.c_username = row['c_username']
                 self.p_username = row['p_username']
-                self.vaccine_name = row['vaccine_name']
+                self.vaccine_name = row['Vaccine_name']
                 return self
         except pymssql.Error:
             # print("Error occurred when getting Appointment")
@@ -75,7 +75,7 @@ class Appointment:
         #save new data entry to appointment:
         add_appointments = "INSERT INTO Appointments VALUES (%s, %s, %s, %s, %s)"
         try:
-            cursor.execute(add_appointments, (self.a_id, self.date, self.c_username, self.p_username, self.vaccine_name))
+            cursor.execute(add_appointments, (self.a_id, self.date, self.p_username, self.c_username, self.vaccine_name))
             # you must call commit() to persist your data if you don't set autocommit to True
             conn.commit()
         except pymssql.Error:
@@ -99,6 +99,35 @@ class Appointment:
                 break
         cm.close_connection()
         return appointment_id
+    
+    #get appointment with p_username:
+    def get_patient_appointment(p_username):
+        #connect with db:
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor(as_dict=True)
+
+        #query appointment table:
+        get_appointment_db = "Select a_id, Vaccine_name, date, c_username from Appointments Where p_username = %s Order by a_id"
+        appointments = [] #store a list of appointment
+        #somthing is wrong that my list didn't append the following: 
+        try:
+            cursor.execute(get_appointment_db, p_username)
+            for row in cursor:
+                a_id = row['a_id']
+                date = row['date']
+                #row[2] is p_username
+                c_username = row['c_username']
+                vaccine_name = row['Vaccine_name'] #align with python, but not sql...
+                appointment = Appointment(a_id, date, c_username, p_username, vaccine_name)#create instance of appointment 
+                appointments.append(appointment)
+        except pymssql.Error as e:
+            print("Error occurred when updating caregiver availability")
+            raise e
+        finally:
+            cm.close_connection()
+        return appointments #return the whole list 
+
 
 
     
