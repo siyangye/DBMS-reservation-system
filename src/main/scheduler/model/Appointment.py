@@ -127,6 +127,32 @@ class Appointment:
         finally:
             cm.close_connection()
         return appointments #return the whole list 
+    
+    def get_caregiver_appointment(c_username):
+        #connect with db:
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor(as_dict=True)
+
+        #query appointment table:
+        get_appointment_db = "Select a_id, Vaccine_name, date, p_username from Appointments Where c_username = %s Order by a_id"
+        appointments = [] #store a list of appointment
+        #somthing is wrong that my list didn't append the following: 
+        try:
+            cursor.execute(get_appointment_db, c_username)
+            for row in cursor:
+                a_id = row['a_id']
+                date = row['date']
+                p_username = row['p_username']
+                vaccine_name = row['Vaccine_name'] #align with python, but not sql...
+                appointment = Appointment(a_id, date, c_username, p_username, vaccine_name)#create instance of appointment 
+                appointments.append(appointment)
+        except pymssql.Error as e:
+            print("Error occurred when updating caregiver availability")
+            raise e
+        finally:
+            cm.close_connection()
+        return appointments #return the whole list 
 
 
 

@@ -383,11 +383,44 @@ def upload_availability(tokens):
 
 
 def cancel(tokens):
-    """
-    TODO: Extra Credit
-    """
-    pass
+    # """
+    # TODO: Extra Credit
+    # """
+    # pass
+    #check 1: either patient/caregiver is logged in. 
+    global current_patient
+    global current_caregiver
+    if current_caregiver is None and current_patient is None:
+        print("Please login first!")
+    #check 2: check if argument is correct, caregiver
+    if len(tokens)!= 2:
+        print("Please try again!")
+        return
+    #case 1: patient is logged in:
+    if current_caregiver is not None:
+        #show appointments first:
+        # print("Choose which appointment you want to cancel.")
+        p_username = Patient.get_username(current_patient)
+        #get appointment instance:
+        appointments = Appointment.get_patient_appointment(p_username) #did I make sure I get all the instance?
+        # return appointment
+        #if no match, print message: 
+        if len(appointments) == 0:
+            print("No appointment made yet!")
+            return
+        
+        for appointment in appointments:
+            a_id = appointment.a_id #call the attribute. 
+            vaccine_name = appointment.vaccine_name
+            date = appointment.date
+            c_username = appointment.c_username
 
+            for i in range(len(appointments)): #count the number of appointment:
+                appointment = appointments[i]
+            print("please print which appointment you want to cancel:")
+            print(f"{i +1}. Appointment ID: {a_id}, vaccine name: {vaccine_name}, date: {date}, caregiver name: {c_username}")
+
+    #case 2: caregiver logged in:
 
 def add_doses(tokens):
     #  add_doses <vaccine> <number>
@@ -396,7 +429,6 @@ def add_doses(tokens):
     if current_caregiver is None:
         print("Please login as a caregiver first!")
         return
-
     #  check 2: the length for tokens need to be exactly 3 to include all information (with the operation name)
     if len(tokens) != 3:
         print("Please try again!")
@@ -446,7 +478,7 @@ def add_doses(tokens):
 
 
 def show_appointments(tokens):
-    '''
+    # '''
     # TODO: Part 2
     # '''
     # pass
@@ -467,29 +499,45 @@ def show_appointments(tokens):
     if current_patient is not None: #patient is logged in!
         #get the patient username:
         p_username = Patient.get_username(current_patient)
-        #get appointment that match p_username:
-        appointment = Appointment.get_patient_appointment(p_username) #did I make sure I get all the instance?
+        #get appointment instance:
+        appointments = Appointment.get_patient_appointment(p_username) #did I make sure I get all the instance?
         # return appointment
         #if no match, print message: 
-        # if len(appointment) == 0:
-            # print("No appointment made yet!")
+        if len(appointments) == 0:
+            print("No appointment made yet!")
+            return
         
-        
+        for appointment in appointments:
+            a_id = appointment.a_id #call the attribute. 
+            vaccine_name = appointment.vaccine_name
+            date = appointment.date
+            c_username = appointment.c_username
+            print(f"Appointment ID: {a_id}, vaccine name: {vaccine_name}, date: {date}, caregiver name: {c_username}")
 
+    #CASE 2: input- caregiver 
+    if current_caregiver is not None: #caregiver is logged in
+        #get the caregiver username:
+        c_username = Caregiver.get_username(current_caregiver)
+        # print(c_username)
+        #get appointments instance:
+        appointments = Appointment.get_caregiver_appointment(c_username)
+        if len(appointments) == 0:
+            print("No appointment made yet.")
+            return
 
-
-    #CASE 2: input- patient
-
-
-
-
+        for appointment in appointments:
+            a_id = appointment.a_id
+            vaccine_name = appointment.vaccine_name
+            date = appointment.date
+            p_username = appointment.p_username
+            print(f"Appointment ID: {a_id}, vaccine name: {vaccine_name}, date: {date}, patient name: {p_username}")
 
 def logout(tokens):
     #check if the argument is correct:
     if len(tokens) > 1:
         print("Logout command does not take any additional arguments. ")
         return
-    
+
     #check if patient/ cargiver is logged in already: 
     global current_caregiver
     global current_patient
