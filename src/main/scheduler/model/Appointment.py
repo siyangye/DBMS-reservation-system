@@ -153,6 +153,23 @@ class Appointment:
         finally:
             cm.close_connection()
         return appointments #return the whole list 
+    
+    def delete_appointment(self): #argument correct?-- argument from outside.
+        cm = ConnectionManager()
+        conn = cm.create_connection()
+        cursor = conn.cursor()
+
+        #query to delete the entire row:
+        delete_appointment_row = "Delete FROM Appointments Where a_id = %s"
+        try:
+            cursor.execute(delete_appointment_row,self.a_id) #check?
+            conn.commit()
+        #query execution:
+        except pymssql.Error:
+            # print("Error occurred when updating caregiver availability")
+            raise
+        finally:
+            cm.close_connection()
 
 
 

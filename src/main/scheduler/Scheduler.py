@@ -133,7 +133,7 @@ def login_patient(tokens):
     # login_patient <username> <password>
     # check 1: if someone's already logged-in, they need to log out first
     global current_patient
-    if current_patient is not None or current_patient is not None:
+    if current_patient is not None or current_caregiver is not None:
         print("User already logged in.")
         return
 
@@ -144,7 +144,6 @@ def login_patient(tokens):
 
     username = tokens[1]
     password = tokens[2]
-
     patient = None
     try:
         patient = Patient(username, password=password).get()
@@ -271,10 +270,7 @@ def reserve(tokens):
     if len(tokens) != 3:
         print("Please try again!")
         return
-    """
-    TODO: check: no available Caregiver
-    TODO: no available vaccine
-    """
+    
     date = tokens[1]
     vaccine_name = tokens[2]
 
@@ -297,8 +293,8 @@ def reserve(tokens):
     caregiver = caregivers[0] #choose the first available in table. 
     c_username = Caregiver.get_username(caregiver) #problem?
     p_username = current_patient.get_username()
-    print(p_username)
-    print(c_username)
+    # print(p_username)
+    # print(c_username)
     #generate ID:
     appointment_id = Appointment.generate_id()
     #create a row/instance for Appointment table:
@@ -327,8 +323,6 @@ def reserve(tokens):
     month = int(date_whole[0])
     day = int(date_whole[1])
     year = int(date_whole[2])
-
-    
 
     try:
         d = datetime.datetime(year, month, day)
@@ -383,10 +377,6 @@ def upload_availability(tokens):
 
 
 def cancel(tokens):
-    # """
-    # TODO: Extra Credit
-    # """
-    # pass
     #check 1: either patient/caregiver is logged in. 
     global current_patient
     global current_caregiver
@@ -394,32 +384,26 @@ def cancel(tokens):
         print("Please login first!")
     #check 2: check if argument is correct, caregiver
     if len(tokens)!= 2:
-        print("Please try again!")
+        print("Wrong input argument, please try again!")
         return
     #case 1: patient is logged in:
-    if current_caregiver is not None:
-        #show appointments first:
-        # print("Choose which appointment you want to cancel.")
-        p_username = Patient.get_username(current_patient)
-        #get appointment instance:
-        appointments = Appointment.get_patient_appointment(p_username) #did I make sure I get all the instance?
-        # return appointment
-        #if no match, print message: 
-        if len(appointments) == 0:
-            print("No appointment made yet!")
-            return
+    a_id = tokens[1]
+    if current_patient is not None:
+        appointment = Appointment(
+            a_id = a_id,
+            date = None,
+            c_username= None,
+            p_username= None,
+            vaccine_name=None
+        )
+        appointment= appointment.get() 
+        # print(appointment)
+        appointment.delete_appointment()
+        print("Appointment deleted!")
+    else:
+        print("Something went wrong")
+        #add availabilibity back to the design:
         
-        for appointment in appointments:
-            a_id = appointment.a_id #call the attribute. 
-            vaccine_name = appointment.vaccine_name
-            date = appointment.date
-            c_username = appointment.c_username
-
-            for i in range(len(appointments)): #count the number of appointment:
-                appointment = appointments[i]
-            print("please print which appointment you want to cancel:")
-            print(f"{i +1}. Appointment ID: {a_id}, vaccine name: {vaccine_name}, date: {date}, caregiver name: {c_username}")
-
     #case 2: caregiver logged in:
 
 def add_doses(tokens):
@@ -597,7 +581,7 @@ def start():
             reserve(tokens)
         elif operation == "upload_availability":
             upload_availability(tokens)
-        elif operation == cancel:
+        elif operation == "cancel":
             cancel(tokens)
         elif operation == "add_doses":
             add_doses(tokens)
