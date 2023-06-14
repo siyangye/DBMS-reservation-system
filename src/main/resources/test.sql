@@ -1,10 +1,10 @@
-SELECT * FROM Patients;
-SELECT * from Availabilities ;
-SELECT * from Appointments ;
-SELECT * from Vaccines ;
-SELECT * from Caregivers ;
+-- SELECT * FROM Patients;
+-- SELECT * from Availabilities ;
+-- SELECT * from Appointments ;
+-- SELECT * from Vaccines ;
+-- SELECT * from Caregivers ;
 
--- --list out all the tables in db: 
+--list out all the tables in db: 
 -- SELECT TABLE_NAME
 -- FROM INFORMATION_SCHEMA.TABLES
 -- WHERE TABLE_TYPE = 'BASE TABLE';
@@ -15,3 +15,9 @@ SELECT * from Caregivers ;
 -- DROP TABLE Patients;
 -- DROP TABLE Vaccines;
 -- DROP TABLE Caregivers;
+
+--print out for final:
+SELECT * FROM Items;
+SELECT * from SalesReps ;
+SELECT * from Transactions ;
+SELECT * from ItemSales ;

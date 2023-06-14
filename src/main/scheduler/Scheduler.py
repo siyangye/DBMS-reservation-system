@@ -289,7 +289,10 @@ def reserve(tokens):
         print("Not enough available doses!")
         return
     
-    #output the available result:
+    if len(caregivers)== 0:
+        print("No caregiver available! Please try another date!")
+        return
+    
     caregiver = caregivers[0] #choose the first available in table. 
     c_username = Caregiver.get_username(caregiver) #problem?
     p_username = current_patient.get_username()
@@ -386,9 +389,28 @@ def cancel(tokens):
     if len(tokens)!= 2:
         print("Wrong input argument, please try again!")
         return
-    #case 1: patient is logged in:
     a_id = tokens[1]
     if current_patient is not None:
+        appointment = Appointment(
+            a_id = a_id,
+            date = None,
+            c_username= None,
+            p_username= None,
+            vaccine_name=None
+        )
+        appointment= appointment.get() 
+        d = appointment.date
+        # print(appointment)
+        appointment.delete_appointment()
+        print("Appointment deleted!")
+        #add availabilibity back to the design:
+        # upload_availability(d)
+        # print(f"reload availability of caregiver on {d}")
+    # else:
+    #     print("Something went wrong, appointment deletion failed.")
+    
+    #case 2: caregiver logged in:
+    elif current_caregiver is not None:
         appointment = Appointment(
             a_id = a_id,
             date = None,
@@ -401,10 +423,7 @@ def cancel(tokens):
         appointment.delete_appointment()
         print("Appointment deleted!")
     else:
-        print("Something went wrong")
-        #add availabilibity back to the design:
-        
-    #case 2: caregiver logged in:
+        print("Something went wrong, appointment deletion failed.")
 
 def add_doses(tokens):
     #  add_doses <vaccine> <number>
